@@ -1,6 +1,6 @@
 #!/usr/bin/ruby
 #Matt Smith/Shawn Rainey
-#Ruby Project
+#antiword-xp.rb - Convert docx files to plaintext
 
 #  add an each_wrapped_line method to the String class
 class String
