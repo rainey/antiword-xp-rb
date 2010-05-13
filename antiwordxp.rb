@@ -53,15 +53,12 @@ end
 
 #Found out the hard way that the env. var $COLUMNS is not exported...
 #So we do this instead
-IO.popen("tput cols"){ |process| $consoleWidth = process.read.to_i }
-if $? != 0
-	$wrapWidth = $consoleWidth = 80
-else
+begin
+	IO.popen("tput cols"){ |process| $consoleWidth = process.read.to_i }
 	$wrapWidth = $consoleWidth
+rescue Errno::ENOENT
+	$wrapWidth = $consoleWidth = 80
 end
-
-#According to irb, it IS this easy
-#$wrapWidth = ENV['COLUMNS']... if only
 
 def usage
 	"Usage: #{$0} takes a .doc or .docx formatted word document. It can be called either by piping the document to antiword, or by calling `#{$0} filename`
