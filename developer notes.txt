@@ -1,5 +1,6 @@
-Shawn Rainey/Matt Smith
 Antiword for docx
+a Shawn Rainey/Matt Smith creation.
+
 Created and tested with Ruby 1.8.6
 
 It's best to turn on wordwrap for this document.
@@ -9,7 +10,7 @@ What it does:
 antiword.rb prints a doc or docx file's text content to stdout. Output is unformatted but word-wrapped to the console's width.  Files can be either piped through standard input or by specifying a filename when invoking the script.  For usage examples, see antiword.rb --help.  The script will run fastest when given a docx file as an argument, as no temporary files are created this way. 
 
 
-This is the usage statement you'll get when running with -help, or in any erroneous way.
+This is the usage statement you'll get when running with -help or if there's an error in your usage.
 
 	Usage: ./antiword.rb takes a .doc or .docx formatted word document. It can be called either by piping the document to antiword, or by calling antiword.rb
 	filename.
@@ -83,4 +84,4 @@ http://www.rtslink.com/introductionxmlsoap.html
 
 Sample doc/docx files:
 http://openxmldeveloper.org/articles/SampleDocs2.aspx
--Note that the docx files here are actually outdated and won't open with a commercially released version of Word. We were able to convert the doc files to docx and test against those though.  We also tested against the ones you mailed us.
+-Note that the docx files here are actually outdated and won't open with a commercially released version of Word.
