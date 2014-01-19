@@ -1,14 +1,17 @@
 Antiword for docx
+
 a Shawn Rainey/Matt Smith creation.
 
-Created and tested with Ruby 1.8.6
+Steve Saus added a few regexes to check for basic formatting like headings, italics, bold, and underlines and have them outputted similar to markdown formatting. 
 
-It's best to turn on wordwrap for this document.
+Tested with Ruby 1.9.3
 
-What it does:
+# What it does:
 
-antiword.rb prints a doc or docx file's text content to stdout. Output is unformatted but word-wrapped to the console's width.  Files can be either piped through standard input or by specifying a filename when invoking the script.  For usage examples, see antiword.rb --help.  The script will run fastest when given a docx file as an argument, as no temporary files are created this way. 
-
+antiword.rb prints a doc or docx file's text content to stdout. Output has minimal formatting akin to basic markdown and word-wrapped to the console's width.    
+Files can be either piped through standard input or by specifying a filename when invoking the script.  
+For usage examples, see antiword.rb --help.  
+The script will run fastest when given a docx file as an argument, as no temporary files are created this way.  
 
 This is the usage statement you'll get when running with -help or if there's an error in your usage.
 
@@ -21,8 +24,18 @@ This is the usage statement you'll get when running with -help or if there's an 
 	$cat mydoc.doc[x] | ./antiword.rb
 	$ruby antiword.rb --notimeout -w 100 mydoc.docx
 
+Formatting for heading is done by
+` # h1
+` # h2
+` # h3
+and so on, and 
+` *italics*
+` **bold**
+` _underline_
 
-How it does it:
+And yes, I know it's not really underlining in markdown.
+
+# How it does it:
 
 The script mostly consists of a word wrapping function, XML replacement regex's, and functionality for interpreting the command line arguments.
 
@@ -30,7 +43,7 @@ If no file is specified in the arguments, we try to read stdin into a temporary 
 
 After the input file is read, we try to read word/document.xml from it using RubyZip's zipfilesystem module.  This module essentially allows us to open files within the zip file as if they were on the file system.  If the unzip completes successfully, read the contents of document.xml into the document string and move on to doing the Regex substitutions.  Otherwise, we try to run the system's antiword with the file and capture its output into the document string.  If that fails, the we recognize the file as an unsupported format, print a usage statement, and exit.  
 
-Since the output of antiword is already formated for the conole, we can skip the regex replacements if that's where we got the output from. Otherwise, we enter a section full of regex replacements.  In this section, we first replace known tags with appropriate strings ('-' for list items, ' | ' to divide colums, "\n\r" from </w:p> tags, and [pic] to signify a picture).  After that, tags are completely stripped out, leaving only the text of the document behind.  There are 5 XML characters that have escape sequences, and we replace those after removing the tags.  We lastly use ruby's Iconv to replace non-printable UTF-8 characters with their ascii equivalents.
+Since the output of antiword is already formated for the conole, we can skip the regex replacements if that's where we got the output from. Otherwise, we enter a section full of regex replacements.  In this section, we first replace known tags with appropriate strings ('-' for list items, ' | ' to divide colums, "\n" from <w:p> tags, and [pic] to signify a picture).  After that, tags are completely stripped out, leaving only the text of the document behind.  There are 5 XML characters that have escape sequences, and we replace those after removing the tags.  We lastly use ruby's Iconv to replace non-printable UTF-8 characters with their ascii equivalents.
 
 Assuming no errors so far, we write a word-wrapped document to the console.  To do this, we needed to write a word-wrapping function.  Since Ruby allows a programmer to add methods to any existing class, we decided it would be most natural to add the word-wrapping function to the String class.  We also made the function yield lines of a specified width, which allowed us to use a syntax not unlike Ruby's built-in method of iteration when outputting the lines.  The function works basically the same as the one that was done in class.  It breaks each line of a string into words, and progressively adds words to a new string until a word won't fit on the line - in which case, we add that built string to an array of lines, and start building a new one with the word that didn't fit.  We do this until we reach the end of the unwrapped line.  When we reach the end of an unwrapped line, we output a seperator at the end of it, which is "\n" by default.  This ensures paragraph spacing.  
 
@@ -64,9 +77,11 @@ Known Issues:
 	- Line wrapping does not preserve leading spaces.
 	- Timeout does not work in Windows 
 	- You cannot pipe a word file in using Windows
-
+	- I have no idea how well my edits work in Windows.  I might have broken the carriage returns.
 
 References/pages we found useful while developing this:
+
+http://www.jackreichert.com/2012/11/09/how-to-convert-docx-to-html/
 
 http://rockhopper.monmouth.edu/cs/jchung/cs498gpl/introduction_to_ruby
 http://ruby-doc.org/core/

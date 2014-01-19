@@ -254,15 +254,47 @@ if(process_xml)
 	#Tabbed Columns
 	replacements << [ /<w:tab[^\/]*\/>/, " " ]
 	
-	#Substitute end paragraph tag with newline
-	#Effectively, this should treat each paragraph on one line
-	replacements << [ /<\/w:p>/, "\r\n" ]
-	
 	#insert [pic] to replace graphics.
 	replacements << [ /<pic:pic[^>]*>/, '[pic]']
 	
 	replacements << [ /<wp:posOffset>\d+?<\/wp:posOffset>/, "" ] 
+
+	#Adding elements in markdown format for formatting
+	#Getting info from http://www.jackreichert.com/2012/11/09/how-to-convert-docx-to-html/
+	#key is that each group of formatted words is ended with </w:r>
+	#Using the whole regex match because the tags get stripped in a sec anyway, and helps solve if there's multiple issues.
+	#italics
+	replacements << [ /<w:i\/><.+?><w:t>.+?<\/w:r>/, "*\\0*" ]
+
+	#bold  
+	replacements << [ /<w:b\/><.+?><w:t>.+?<\/w:r>/, "**\\0**" ]
+
+	#Underscore (yes, I know not really, but it works in plain text and it should probably be emphasis anyway.)
+	replacements << [ /<w:u\/><.+?><w:t>.+?<\/w:r>/, "_\\0_" ]
 	
+	#heading1
+	replacements << [ /<w:pStyle w:val="Heading1"\/>.+?<w:p>/, "# \\0" ]
+	
+	#heading2
+	replacements << [ /<w:pStyle w:val="Heading2"\/>.+?<w:p>/, "## \\0" ]
+	
+	#heading3
+	replacements << [ /<w:pStyle w:val="Heading3"\/>.+?<w:p>/, "### \\0" ]
+
+	#heading4
+	replacements << [ /<w:pStyle w:val="Heading3"\/>.+?<w:p>/, "#### \\0" ]
+
+	#heading5
+	replacements << [ /<w:pStyle w:val="Heading3"\/>.+?<w:p>/, "##### \\0" ]
+	
+	#heading6
+	replacements << [ /<w:pStyle w:val="Heading3"\/>.+?<w:p>/, "###### \\0" ]
+		
+	#Substitute end paragraph tag with newline
+	#Effectively, this should treat each paragraph on one line
+	replacements << [ /<w:p>/, "\n" ]
+	replacements << [ /<\/w:p>/, "\n" ]
+
 	#Remove all other tags
 	replacements << [ /<[^>]*>/, "" ]
 
