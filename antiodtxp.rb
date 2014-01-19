@@ -1,6 +1,7 @@
 #!/usr/bin/ruby
 #Matt Smith/Shawn Rainey
-#antiword-xp.rb - Convert docx files to plaintext
+#antiodtxp.rb - Convert OpenOffice/LibreOffice files to plaintext
+#Steve Saus twisted this so that it should work with ODT formats instead of DOCX formats, with minimal markdown-type output.
 
 #  add an each_wrapped_line method to the String class
 class String
@@ -194,7 +195,7 @@ if true
 	require 'zip/zipfilesystem'
 	begin
 		Zip::ZipFile.open(filename) { | awContents |
-			document = awContents.read("word/document.xml")
+			document = awContents.read("content.xml")
 		}
 	rescue Zip::ZipError
 		gotContents = false;
@@ -202,7 +203,7 @@ if true
 else
 	#unzip options: pipe output to stdout, only extract word/document.xml
 	#result.read captures stdout from the opened process.
-	IO.popen("unzip -p antiword_temp.zip word/document.xml 2> /dev/null") { |result| document = result.read }
+	IO.popen("unzip -p antiword_temp.zip content.xml 2> /dev/null") { |result| document = result.read }
 	gotContents = ($? == 0)
 end
 
@@ -239,6 +240,7 @@ unless gotContents
 end
 
 if(process_xml)
+
 	replacements = []
 	#Remove line breaks.  There are none in MS-Words's XML, but
 	#Could change in the future.  Or could have been generated
@@ -246,54 +248,56 @@ if(process_xml)
 	replacements << [ /\n|\r/, '']
 	
 	#Add seperators where column tags are using pipe, unless last in row
-	replacements << [ /<\/w:p><\/w:tc>(?!<\/w:tr>)/, " | " ]
+	#replacements << [ /<\/w:p><\/w:tc>(?!<\/w:tr>)/, " | " ]
 	
 	#list elements, may add more soon
-	replacements << [ /<w:numPr>/, "-" ]
+	#replacements << [ /<w:numPr>/, "-" ]
 	
 	#Tabbed Columns
-	replacements << [ /<w:tab[^\/]*\/>/, " " ]
+	replacements << [ /<text:tab[^\/]*\/>/, "   " ]
 	
 	#insert [pic] to replace graphics.
-	replacements << [ /<pic:pic[^>]*>/, '[pic]']
+	#replacements << [ /<pic:pic[^>]*>/, '[pic]']
 	
-	replacements << [ /<wp:posOffset>\d+?<\/wp:posOffset>/, "" ] 
+	#replacements << [ /<wp:posOffset>\d+?<\/wp:posOffset>/, "" ] 
 
 	#Adding elements in markdown format for formatting
-	#Getting info from http://www.jackreichert.com/2012/11/09/how-to-convert-docx-to-html/
-	#key is that each group of formatted words is ended with </w:r>
-	#Using the whole regex match because the tags get stripped in a sec anyway, and helps solve if there's multiple issues.
-	#italics
-	replacements << [ /<w:i\/><.+?><w:t>.+?<\/w:r>/, "*\\0*" ]
-
-	#bold  
-	replacements << [ /<w:b\/><.+?><w:t>.+?<\/w:r>/, "**\\0**" ]
-
-	#Underscore (yes, I know not really, but it works in plain text and it should probably be emphasis anyway.)
-	replacements << [ /<w:u\/><.+?><w:t>.+?<\/w:r>/, "_\\0_" ]
+	#Have to test for which one is which because OOO will switch them among these three.
+	_bold = document.scan(/<style:style style:name=\"([0-9a-zA-Z]+)\" style:family="text"><style:text-properties fo:font-weight=\"bold\"/)
+	if _bold.length > 0	
+		replacements << [ /(text:style-name=\"#{_bold[0][0]}\">)(.+?)(<\/text:span>)/, "\\1**\\2**\\3" ]
+	end
+	#testing for these right off the bat because OOO doesn't have consistent names for these styles
+	_italic = document.scan(/<style:style style:name=\"([0-9a-zA-Z]+)\" style:family="text"><style:text-properties fo:font-style=\"italic\"/)
+	if _italic.length > 0
+		replacements << [ /(text:style-name=\"#{_italic[0][0]}\">)(.+?)(<\/text:span>)/, "\\1*\\2*\\3" ]
+ 	end
+	_underline = document.scan(/<style:style style:name=\"([0-9a-zA-Z]+)\" style:family="text"><style:text-properties style:text-underline-style=\"[a-zA-Z]+\"/)
+	if _underline.length > 0
+		replacements << [ /(text:style-name=\"#{_underline[0][0]}\">)(.+?)(<\/text:span>)/, "\\1_\\2_\\3" ]
+	end
 	
 	#heading1
-	replacements << [ /<w:pStyle w:val="Heading1"\/>.+?<w:p>/, "# \\0" ]
-	
+	replacements << [ /(text:outline-level="1">)(.+?)(<\/text:h>)/, "\\1# \\2\n\\3" ]
+
 	#heading2
-	replacements << [ /<w:pStyle w:val="Heading2"\/>.+?<w:p>/, "## \\0" ]
+	replacements << [ /(text:outline-level="1">)(.+?)(<\/text:h>)/, "\\1## \\2\n\\3" ]
 	
 	#heading3
-	replacements << [ /<w:pStyle w:val="Heading3"\/>.+?<w:p>/, "### \\0" ]
+	replacements << [ /(text:outline-level="1">)(.+?)(<\/text:h>)/, "\\1### \\2\n\\3" ]
 
 	#heading4
-	replacements << [ /<w:pStyle w:val="Heading3"\/>.+?<w:p>/, "#### \\0" ]
+	replacements << [ /(text:outline-level="1">)(.+?)(<\/text:h>)/, "\\1#### \\2\n\\3" ]
 
 	#heading5
-	replacements << [ /<w:pStyle w:val="Heading3"\/>.+?<w:p>/, "##### \\0" ]
+	replacements << [ /(text:outline-level="1">)(.+?)(<\/text:h>)/, "\\1##### \\2\n\\3" ]
 	
 	#heading6
-	replacements << [ /<w:pStyle w:val="Heading3"\/>.+?<w:p>/, "###### \\0" ]
+	replacements << [ /(text:outline-level="1">)(.+?)(<\/text:h>)/, "\\1###### \\2\n\\3" ]
 		
-	#Substitute end paragraph tag with newline
+	#Substitute *beginning* paragraph tag with newline
 	#Effectively, this should treat each paragraph on one line
-	replacements << [ /<w:p>/, "\n" ]
-	replacements << [ /<\/w:p>/, "\n" ]
+	replacements << [ /><text:p/, ">\n<text:p" ]
 
 	#Remove all other tags
 	replacements << [ /<[^>]*>/, "" ]

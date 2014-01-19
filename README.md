@@ -2,7 +2,7 @@ Antiword for docx
 
 a Shawn Rainey/Matt Smith creation.  Original at https://github.com/rainey/antiword-xp-rb
 
-Steve Saus added a few regexes to check for basic formatting like headings, italics, bold, and underlines and have them outputted similar to markdown formatting. 
+Steve Saus added a few regexes to check for basic formatting like headings, italics, bold, and underlines and have them outputted similar to markdown formatting.  He also made a version of the script (which isn't cleaned up yet and clearly deriviative as all heck) to do the same job with OpenOffice and LibreOffice documents quickly and cleanly.
 
 Tested with Ruby 1.9.3
 
