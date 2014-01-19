@@ -1,6 +1,6 @@
 Antiword for docx
 
-a Shawn Rainey/Matt Smith creation.
+a Shawn Rainey/Matt Smith creation.  Original at https://github.com/rainey/antiword-xp-rb
 
 Steve Saus added a few regexes to check for basic formatting like headings, italics, bold, and underlines and have them outputted similar to markdown formatting. 
 
