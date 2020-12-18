@@ -70,7 +70,9 @@ Arguments:"
 
 "-w## or -w ##	Set wrap with.  If not specified, uses console width or 80 if console width cannot be determined.
 
---notimeout Disable input timeout.  This could be necessary for large files or files from external sources.  Only needed when piping in a word file, and not when one is specified in the programs argument list.".each_wrapped_line($consoleWidth) { | line | puts line }
+--notimeout Disable input timeout.  This could be necessary for large files or files from external sources.  Only needed when piping in a word file, and not when one is specified in the programs argument list.
+
+--noconv Do not perform UTF8->ascii conversion".each_wrapped_line($consoleWidth) { | line | puts line }
 
 
 puts"
@@ -94,6 +96,8 @@ arg_sep = "<"
 until ARGV.join("") !~ /#{arg_sep}/ 
 	arg_sep = Digest::hexencode(Digest::SHA2.new().digest(rand().to_s)).tr("0-9", "G-P")
 end
+
+do_conv = true
 
 argstring = ARGV.join(arg_sep)
 
@@ -119,7 +123,10 @@ else
 	 			"(.+\\.docx?)" => \
  					lambda { | matchData | 
  						temp_fname = matchData.to_a[1] unless matchData == nil
- 					}
+ 					},
+                                "--noconv" => \
+                                        lambda { | matchData | do_conv = false if matchData
+                                },
 	 		} 
 	
 	argtokens.each_pair { | expression, callback |
@@ -316,8 +323,10 @@ if(process_xml)
 	
 	#Some UTF-8 characters don't print
 	#This translates from utf-8 to ascii
-	require "iconv"
-	document = Iconv.conv("ascii//translit", "UTF-8", document)	
+        if do_conv
+          require "iconv"
+          document = Iconv.conv("ascii//translit", "UTF-8", document)
+        end
 end
 
 begin
